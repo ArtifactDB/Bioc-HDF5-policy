@@ -13,32 +13,39 @@ and thus decrease the risk of errors in language-specific implementations when r
 ### Overview
 
 The HDF5 specification supports many different datatypes... so many, in fact, it can be difficult for readers to know what they should expect.
-This document aims to place some constraints on the types that can be used to represent Bioconductor objects,
+This document aims to place some constraints on the datatypes that can be used to represent Bioconductor objects,
 to simplify the process of validation and/or reading objects into memory.
 
 ### Integers 
 
-Object representations containing integer datasets should specify the largest integer type that can be used to represent the data.
-This eliminates the need for readers to dispatch on different types, though they may still choose to do so if a smaller type provides more efficient downstream processing.
+Representations of integers should specify the largest integer datatype that can be used in the HDF5 dataset,
+i.e., the integer type that is guaranteed to be capable of representing all values of the dataset.
+This eliminates the need for readers to dispatch on different datatypes, though they may still choose to do so if a smaller datatype provides more efficient downstream processing.
 
-For example, most representations will specify that any integer array/vector should contain values that can be exactly represented in memory by a 32-bit signed integer.
+For example, most objects containing integers will specify that the corresponding HDF5 dataset should contain values that can be exactly represented in memory by a 32-bit signed integer.
 Readers can thus safely assume that an `int32_t` is sufficient to represent all possible values.
 Writers may create HDF5 datasets with any integer datatype that can be fully represented by an `int32_t`, e.g., `H5T_NATIVE_INT8`, `H5T_NATIVE_UINT16`.
 
-Of course, specific representations may demand a smaller or larger integer type for particular integer datasets.
-This is completely acceptable as long as the expected type is explicitly stated.
+### Floats
 
-### Floating-point types
+Representations of floating-point numbers should specify the largest floating-point datatype that can be used in the HDF5 dataset,
+i.e., the floating-point type that is guaranteed to be capable of representing all values of the dataset.
+This eliminates the need for readers to dispatch on different datatypes, though they may still choose to do so if a smaller datatype provides more efficient downstream processing.
 
-All floating-point datasets should contain values that can be exactly represented in memory by IEEE754 double-precision (64-bit) floats.
-This is necessary for faithful propagation of special values like infinity and NaN.
-Readers can safely assume that an IEEE754-compliant `double` is sufficient to represent all values in memory.
-Writers may create HDF5 datasets with any floating-point or integer type that can be exactly represented by a `double`, e.g., `H5T_NATIVE_FLOAT`, `H5T_NATIVE_UINT32`.
+For example, most objects containing floats will specify that the HDF5 dataset should contain values that can be exactly represented in memory by 64-bit floationg-point numbers.
+Readers can safely assume that an `double` is sufficient to represent all values in memory.
+Writers may create HDF5 datasets with any floating-point or integer datatype that can be exactly represented by a `double`, e.g., `H5T_NATIVE_FLOAT`, `H5T_NATIVE_UINT32`.
 
-### String types
+It should be assumed that all representations are IEEE754-compliant, to ensure the faithful propagation of special values like infinity and NaN.
 
-String datasets may be represented by any HDF5 string type, i.e., variable or fixed length, ASCII or UTF-8 encoding.
-Readers may assume UTF-8 encoding for all strings as this is a superset of ASCII anyway.
+### Strings
+
+Representations of strings should specify the encoding(s) that can be used in the HDF5 dataset.
+From a specification perspective, there is no difference between variable and fixed length string datatypes -
+in the latter, the length of the string is either equal to the fixed length or is defined by null termination.
+
+Most objects containing strings will specify that the HDF5 dataset should contain values that can be exactly represented by UTF-8 encoded strings.
+This supports both ASCII and UTF-8 encodings as the former is a subset of the latter anyway. 
 
 ## Missing value placeholders
 
@@ -53,7 +60,7 @@ If no placeholder is present, readers may assume that no values are missing.
 Our placeholder approach is a variation of the sentinel method used by R for its 32-bit integers.
 Here, the lowest value (-2147483648) is considered to be missing, which works well but has a few pitfalls.
 Most obviously, it excludes -2147483648 as a valid integer.
-It also prohibits the use of a smaller integer type for efficient storage of a dataset with missing values in a HDF5 file.
+It also prohibits the use of a smaller integer datatype for efficient storage of a dataset with missing values in a HDF5 file.
 Both problems can be avoided by allowing writers to customize the placeholder according to the contents of the dataset.
 
 It is worth mentioning that, in R, a NaN with a special payload is used to mark missing floating-point values.
