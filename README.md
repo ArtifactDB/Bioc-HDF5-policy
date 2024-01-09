@@ -41,11 +41,13 @@ It should be assumed that all representations are IEEE754-compliant, to ensure t
 ### Strings
 
 Representations of strings should specify the encoding(s) that can be used in the HDF5 dataset.
-From a specification perspective, there is no difference between variable and fixed length string datatypes -
-in the latter, the length of the string is either equal to the fixed length or is defined by null termination.
-
 Most objects containing strings will specify that the HDF5 dataset should contain values that can be exactly represented by UTF-8 encoded strings.
-This supports both ASCII and UTF-8 encodings as the former is a subset of the latter anyway. 
+This supports both ASCII and UTF-8 encodings as the former is a subset of the latter anyway.
+
+From a specification perspective, there is no difference between variable and fixed length string datatypes.
+In the latter, the length of the string is defined by null termination or by the fixed length if no null character is present.
+This interpretation is the same regardless of the choice of string padding strategy. 
+If a string is right-padded with spaces (as in Fortran), the spaces should just be treated as part of the string.
 
 ## Missing value placeholders
 
@@ -90,5 +92,5 @@ Note that the equality comparison has some implications:
 
 ### For strings
 
-This attribute should be a scalar of the same exact datatype as the dataset.
+This attribute should be a scalar of the same datatype class as the dataset.
 All values in the dataset with the same sequence of bytes (as defined by, e.g., `strcmp`) as the placeholder value should be treated as missing.
